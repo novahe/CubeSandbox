@@ -125,6 +125,7 @@ export default withMermaid(defineConfig({
             {
               text: '开发文档',
               items: [
+                { text: '常见问题', link: '/zh/guide/faq' },
                 { text: '连接到已有 Cube 集群', link: '/zh/guide/connect-existing-cluster' }
               ]
             }

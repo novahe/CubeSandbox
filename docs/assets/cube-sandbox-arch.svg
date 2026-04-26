@@ -1,0 +1,223 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900" role="img" aria-labelledby="title desc">
+  <title id="title">Cube Sandbox architecture</title>
+  <desc id="desc">Architecture diagram showing client workloads, Cube control plane, sandbox access path, and compute node runtime.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fbff"/>
+      <stop offset="1" stop-color="#fff7f2"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#27435f" flood-opacity=".14"/>
+    </filter>
+    <marker id="arrow-control" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#dc5f2e"/>
+    </marker>
+    <marker id="arrow-data" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#1378b9"/>
+    </marker>
+    <marker id="arrow-runtime" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#56606a"/>
+    </marker>
+    <style>
+      text { font-family: Inter, "SF Pro Display", "Segoe UI", Arial, sans-serif; fill: #22313f; }
+      .title { font-size: 30px; font-weight: 800; letter-spacing: 0; fill: #162532; }
+      .subtitle { font-size: 15px; font-weight: 500; fill: #5d6c79; }
+      .section-title { font-size: 18px; font-weight: 800; fill: #24313b; }
+      .section-note { font-size: 13px; font-weight: 500; fill: #697986; }
+      .lane-label { font-size: 14px; font-weight: 800; fill: #ffffff; }
+      .box-title { font-size: 16px; font-weight: 800; fill: #ffffff; }
+      .box-sub { font-size: 12px; font-weight: 600; fill: rgba(255,255,255,.86); }
+      .dark-title { font-size: 16px; font-weight: 800; fill: #21303d; }
+      .dark-sub { font-size: 12px; font-weight: 600; fill: #5d6a76; }
+      .small { font-size: 11px; font-weight: 650; fill: #5a6873; }
+      .legend { font-size: 12px; font-weight: 700; fill: #40505d; }
+      .panel { fill: #ffffff; stroke: #d7e3ec; stroke-width: 1.4; rx: 18; filter: url(#shadow); }
+      .node-panel { fill: #fffdfb; stroke: #f0b391; stroke-width: 1.6; rx: 18; filter: url(#shadow); }
+      .vm { fill: #ffffff; stroke: #1d86c9; stroke-width: 2; rx: 12; }
+      .vm-head { fill: #d9835f; }
+      .vm-band { fill: #dff2ff; stroke: #9dd0f0; stroke-width: 1; }
+      .chip { fill: #f3f7fa; stroke: #d5e1e9; stroke-width: 1; rx: 12; }
+      .control { stroke: #dc5f2e; stroke-width: 3; fill: none; marker-end: url(#arrow-control); }
+      .data { stroke: #1378b9; stroke-width: 3; fill: none; marker-end: url(#arrow-data); }
+      .runtime { stroke: #56606a; stroke-width: 2.4; fill: none; marker-end: url(#arrow-runtime); }
+      .dash-control { stroke: #dc5f2e; stroke-width: 2.4; stroke-dasharray: 8 7; fill: none; marker-end: url(#arrow-control); }
+      .dash-data { stroke: #1378b9; stroke-width: 2.4; stroke-dasharray: 8 7; fill: none; marker-end: url(#arrow-data); }
+      .dash-runtime { stroke: #56606a; stroke-width: 2; stroke-dasharray: 7 6; fill: none; marker-end: url(#arrow-runtime); }
+    </style>
+  </defs>
+
+  <rect width="1400" height="900" fill="url(#bg)"/>
+  <text x="700" y="46" text-anchor="middle" class="title">Cube Sandbox Architecture</text>
+  <text x="700" y="70" text-anchor="middle" class="subtitle">E2B-compatible API, cluster scheduling, routed sandbox access, and KVM MicroVM isolation</text>
+
+  <rect x="46" y="96" width="1308" height="106" class="panel"/>
+  <text x="76" y="128" class="section-title">Client workloads</text>
+  <text x="76" y="151" class="section-note">Drop-in E2B SDK and agent scenarios</text>
+  <g transform="translate(300 118)">
+    <rect width="170" height="54" rx="14" fill="#9f6395"/>
+    <text x="85" y="31" text-anchor="middle" class="box-title">E2B SDK</text>
+    <text x="85" y="47" text-anchor="middle" class="box-sub">Sandbox.create</text>
+  </g>
+  <g transform="translate(520 118)">
+    <rect width="170" height="54" rx="14" fill="#7c69ad"/>
+    <text x="85" y="31" text-anchor="middle" class="box-title">OpenClaw / RL</text>
+    <text x="85" y="47" text-anchor="middle" class="box-sub">agent tasks</text>
+  </g>
+  <g transform="translate(740 118)">
+    <rect width="170" height="54" rx="14" fill="#5f7eb5"/>
+    <text x="85" y="31" text-anchor="middle" class="box-title">Browser</text>
+    <text x="85" y="47" text-anchor="middle" class="box-sub">preview / apps</text>
+  </g>
+  <g transform="translate(960 118)">
+    <rect width="170" height="54" rx="14" fill="#557b71"/>
+    <text x="85" y="31" text-anchor="middle" class="box-title">API clients</text>
+    <text x="85" y="47" text-anchor="middle" class="box-sub">REST / WebSocket</text>
+  </g>
+
+  <rect x="46" y="246" width="1308" height="196" class="panel"/>
+  <rect x="46" y="246" width="1308" height="36" rx="18" fill="#d9835f"/>
+  <text x="700" y="270" text-anchor="middle" class="lane-label">Cube control and access plane</text>
+
+  <g transform="translate(124 318)">
+    <rect width="200" height="72" rx="14" fill="#d9825f"/>
+    <text x="100" y="32" text-anchor="middle" class="box-title">CubeAPI</text>
+    <text x="100" y="51" text-anchor="middle" class="box-sub">E2B-compatible REST</text>
+  </g>
+  <g transform="translate(420 318)">
+    <rect width="220" height="72" rx="14" fill="#d9825f"/>
+    <text x="110" y="32" text-anchor="middle" class="box-title">CubeMaster</text>
+    <text x="110" y="51" text-anchor="middle" class="box-sub">scheduler / cluster state</text>
+  </g>
+  <g transform="translate(750 318)">
+    <rect width="180" height="72" rx="14" fill="#9d8560"/>
+    <text x="90" y="32" text-anchor="middle" class="box-title">MySQL / Redis</text>
+    <text x="90" y="51" text-anchor="middle" class="box-sub">metadata and cache</text>
+  </g>
+  <g transform="translate(1030 318)">
+    <rect width="220" height="72" rx="14" fill="#207fb9"/>
+    <text x="110" y="32" text-anchor="middle" class="box-title">CubeProxy</text>
+    <text x="110" y="51" text-anchor="middle" class="box-sub">Host route to sandbox</text>
+  </g>
+
+  <path d="M385 172 L385 295 L224 295 L224 318" class="control"/>
+  <text x="260" y="288" class="legend" fill="#dc5f2e">create / manage</text>
+  <path d="M324 354 L420 354" class="control"/>
+  <path d="M640 354 L750 354" class="dash-runtime"/>
+  <path d="M1045 172 L1045 218 L1140 218 L1140 318" class="data"/>
+  <text x="930" y="215" class="legend" fill="#1378b9">app traffic</text>
+  <text x="1094" y="306" class="legend" fill="#1378b9">&lt;port&gt;-&lt;sandbox_id&gt;.&lt;domain&gt;</text>
+
+  <rect x="46" y="486" width="1308" height="352" class="node-panel"/>
+  <rect x="46" y="486" width="1308" height="38" rx="18" fill="#e69a77"/>
+  <text x="700" y="511" text-anchor="middle" class="lane-label">Compute nodes: repeated per host</text>
+
+  <g transform="translate(80 550)">
+    <rect width="590" height="252" rx="16" fill="#fff8f4" stroke="#efb291" stroke-width="1.5"/>
+    <text x="24" y="32" class="section-title">Node A</text>
+    <text x="24" y="54" class="section-note">Cubelet + network-agent + CubeShim</text>
+
+    <g transform="translate(28 82)">
+      <rect width="150" height="58" rx="12" fill="#d9825f"/>
+      <text x="75" y="27" text-anchor="middle" class="box-title">Cubelet</text>
+      <text x="75" y="44" text-anchor="middle" class="box-sub">lifecycle manager</text>
+    </g>
+    <g transform="translate(220 82)">
+      <rect width="150" height="58" rx="12" fill="#da8a61"/>
+      <text x="75" y="27" text-anchor="middle" class="box-title">CubeShim</text>
+      <text x="75" y="44" text-anchor="middle" class="box-sub">Shim v2 - hypervisor</text>
+    </g>
+    <g transform="translate(412 82)">
+      <rect width="150" height="58" rx="12" fill="#207fb9"/>
+      <text x="75" y="27" text-anchor="middle" class="box-title">CubeVS</text>
+      <text x="75" y="44" text-anchor="middle" class="box-sub">eBPF NAT / policy</text>
+    </g>
+
+    <path d="M178 111 L220 111" class="runtime"/>
+    <path d="M370 111 L412 111" class="dash-runtime"/>
+
+    <g transform="translate(28 164)">
+      <rect width="244" height="70" class="vm"/>
+      <rect width="244" height="28" class="vm-head"/>
+      <text x="122" y="20" text-anchor="middle" class="box-sub">KVM MicroVM</text>
+      <rect x="0" y="42" width="244" height="28" class="vm-band"/>
+      <text x="122" y="61" text-anchor="middle" class="small">Guest kernel + sandbox rootfs</text>
+      <rect x="22" y="17" width="78" height="23" rx="6" fill="#c35f35"/>
+      <text x="61" y="33" text-anchor="middle" class="box-sub">cube-agent</text>
+      <rect x="136" y="17" width="88" height="23" rx="6" fill="#c35f35"/>
+      <text x="180" y="33" text-anchor="middle" class="box-sub">processes</text>
+    </g>
+    <g transform="translate(318 164)">
+      <rect width="244" height="70" class="vm"/>
+      <rect width="244" height="28" class="vm-head"/>
+      <text x="122" y="20" text-anchor="middle" class="box-sub">KVM MicroVM</text>
+      <rect x="0" y="42" width="244" height="28" class="vm-band"/>
+      <text x="122" y="61" text-anchor="middle" class="small">Guest kernel + sandbox rootfs</text>
+      <rect x="22" y="17" width="78" height="23" rx="6" fill="#c35f35"/>
+      <text x="61" y="33" text-anchor="middle" class="box-sub">cube-agent</text>
+      <rect x="136" y="17" width="88" height="23" rx="6" fill="#c35f35"/>
+      <text x="180" y="33" text-anchor="middle" class="box-sub">apps</text>
+    </g>
+    <path d="M296 140 L180 164" class="runtime"/>
+    <path d="M296 140 L440 164" class="runtime"/>
+    <path d="M486 140 C486 158 457 160 440 164" class="dash-data"/>
+    <path d="M486 140 C486 158 194 160 180 164" class="dash-data"/>
+  </g>
+
+  <g transform="translate(730 550)">
+    <rect width="590" height="252" rx="16" fill="#fff8f4" stroke="#efb291" stroke-width="1.5"/>
+    <text x="24" y="32" class="section-title">Node B ... Node N</text>
+    <text x="24" y="54" class="section-note">same runtime stack for horizontal scale</text>
+
+    <g transform="translate(28 82)">
+      <rect width="150" height="58" rx="12" fill="#d9825f"/>
+      <text x="75" y="27" text-anchor="middle" class="box-title">Cubelet</text>
+      <text x="75" y="44" text-anchor="middle" class="box-sub">registered to master</text>
+    </g>
+    <g transform="translate(220 82)">
+      <rect width="150" height="58" rx="12" fill="#da8a61"/>
+      <text x="75" y="27" text-anchor="middle" class="box-title">CubeShim</text>
+      <text x="75" y="44" text-anchor="middle" class="box-sub">launches MicroVMs</text>
+    </g>
+    <g transform="translate(412 82)">
+      <rect width="150" height="58" rx="12" fill="#207fb9"/>
+      <text x="75" y="27" text-anchor="middle" class="box-title">CubeVS</text>
+      <text x="75" y="44" text-anchor="middle" class="box-sub">TAP + BPF maps</text>
+    </g>
+    <path d="M178 111 L220 111" class="runtime"/>
+    <path d="M370 111 L412 111" class="dash-runtime"/>
+
+    <g transform="translate(118 164)">
+      <rect width="354" height="70" class="vm"/>
+      <rect width="354" height="28" class="vm-head"/>
+      <text x="177" y="20" text-anchor="middle" class="box-sub">sandbox pool: many KVM MicroVM instances</text>
+      <rect x="0" y="42" width="354" height="28" class="vm-band"/>
+      <text x="177" y="61" text-anchor="middle" class="small">cube-agent, user code, exposed services, isolated network</text>
+      <rect x="24" y="17" width="62" height="23" rx="6" fill="#c35f35"/>
+      <text x="55" y="33" text-anchor="middle" class="box-sub">VM</text>
+      <rect x="101" y="17" width="62" height="23" rx="6" fill="#c35f35"/>
+      <text x="132" y="33" text-anchor="middle" class="box-sub">VM</text>
+      <rect x="178" y="17" width="62" height="23" rx="6" fill="#c35f35"/>
+      <text x="209" y="33" text-anchor="middle" class="box-sub">VM</text>
+      <text x="278" y="34" text-anchor="middle" class="dark-title">...</text>
+    </g>
+    <path d="M296 140 L295 164" class="runtime"/>
+    <path d="M486 140 L295 164" class="dash-data"/>
+  </g>
+
+  <path d="M530 390 L530 474 L155 474 L155 550" class="control"/>
+  <path d="M530 390 L530 474 L805 474 L805 550" class="control"/>
+  <text x="430" y="468" class="legend" fill="#dc5f2e">schedule / create / pause / destroy</text>
+
+  <path d="M1140 390 L1140 446 L565 446 L565 632" class="data"/>
+  <path d="M1140 390 L1140 446 L1215 446 L1215 632" class="data"/>
+  <text x="1010" y="439" class="legend" fill="#1378b9">routed service traffic</text>
+
+  <g transform="translate(86 850)">
+    <rect width="18" height="6" rx="3" fill="#dc5f2e"/>
+    <text x="28" y="8" class="legend">control path: API, scheduling, lifecycle</text>
+    <rect x="306" width="18" height="6" rx="3" fill="#1378b9"/>
+    <text x="334" y="8" class="legend">data path: HTTP/WebSocket, port mapping, eBPF forwarding</text>
+    <rect x="760" width="18" height="6" rx="3" fill="#56606a"/>
+    <text x="788" y="8" class="legend">runtime path: containerd shim, hypervisor, vsock agent RPC</text>
+  </g>
+</svg>
