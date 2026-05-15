@@ -7,6 +7,7 @@ pub mod container;
 pub mod cube;
 pub mod hypervisor;
 pub mod log;
+pub mod poc;
 pub mod sandbox;
 pub mod service;
 pub mod snapshot;

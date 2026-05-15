@@ -321,7 +321,6 @@ impl FsEpollHandler {
         let mut limit_by_bytes = Wrapping(0);
 
         while let Some(desc_chain) = queue.pop_descriptor_chain(self.mem.memory()) {
-
             let head_index = desc_chain.head_index();
 
             let reader = Reader::new(desc_chain.memory(), desc_chain.clone())

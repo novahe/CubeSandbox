@@ -33,6 +33,7 @@ pub const ADDRESS_FILE: &str = "address";
 pub const VM_PATH: &str = "/run/vc/vm/";
 
 pub const IMAGE_VERSION: &str = "/usr/local/services/cubetoolbox/cube-image/version";
+pub const IMAGE_FS_TYPE: &str = "/usr/local/services/cubetoolbox/cube-image/fs_type";
 
 const SNAPSHOT_BASE_DIR: &str = "/usr/local/services/cubetoolbox/cube-snapshot";
 
@@ -47,8 +48,14 @@ impl Utils {
     pub fn load_spec(bundle: &str) -> CResult<Spec> {
         let mut conf_path = PathBuf::from(bundle);
         conf_path.push("config.json");
-        let spec = Spec::load(conf_path)
-            .map_err(|e| format!("load config failed:{} bundle:{}", e, bundle))?;
+        let spec = Spec::load(&conf_path).map_err(|e| {
+            let content = std::fs::read_to_string(&conf_path)
+                .unwrap_or_else(|_| "could not read file".to_string());
+            format!(
+                "load config failed:{} bundle:{} content:{}",
+                e, bundle, content
+            )
+        })?;
         Ok(spec)
     }
 
@@ -102,6 +109,19 @@ impl Utils {
         file.read_to_string(&mut version)
             .map_err(|e| format!("read file {} failed:{}", IMAGE_VERSION, e))?;
         Ok(version.trim().to_string())
+    }
+
+    pub fn get_image_fs_type() -> CResult<String> {
+        let mut file = match File::open(IMAGE_FS_TYPE) {
+            Ok(f) => f,
+            Err(e) if e.kind() == ErrorKind::NotFound => return Ok("ext4".to_string()),
+            Err(e) => return Err(format!("open file {} failed:{}", IMAGE_FS_TYPE, e)),
+        };
+
+        let mut fs_type = String::new();
+        file.read_to_string(&mut fs_type)
+            .map_err(|e| format!("read file {} failed:{}", IMAGE_FS_TYPE, e))?;
+        Ok(fs_type.trim().to_string())
     }
 
     pub fn get_snapshot_base_dir(base: Option<&str>, _product: &str) -> String {

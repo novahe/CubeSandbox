@@ -5,7 +5,7 @@
 use anyhow::Result;
 
 use clap::Parser;
-use containerd_shim_cube_rs::snapshot;
+use containerd_shim_cube_rs::{poc, snapshot};
 use cube_runtime::{
     completions, login,
     parser::{CliArgs, SubCommands},
@@ -33,6 +33,10 @@ async fn execute(args: CliArgs) -> Result<()> {
     match args.command {
         SubCommands::Snapshot(snapshot_args) => {
             snapshot::cmd::execute(snapshot_args).await?;
+        }
+
+        SubCommands::ErofsPoc(poc_args) => {
+            poc::cmd::execute(poc_args).await?;
         }
 
         SubCommands::Login(login_args) => {

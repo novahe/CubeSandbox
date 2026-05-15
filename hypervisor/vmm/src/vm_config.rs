@@ -435,6 +435,8 @@ impl Default for FsConfig {
 pub struct PmemConfig {
     pub file: PathBuf,
     #[serde(default)]
+    pub fs_type: String,
+    #[serde(default)]
     pub size: Option<u64>,
     #[serde(default)]
     pub iommu: bool,

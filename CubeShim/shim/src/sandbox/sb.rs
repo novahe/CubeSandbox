@@ -313,8 +313,6 @@ impl SandBox {
 
             infof!(self.log, "found pmem:{p:?}");
             storages.push(ps.clone());
-
-           
         }
 
         //disk

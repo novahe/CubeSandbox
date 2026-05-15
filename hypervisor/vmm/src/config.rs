@@ -1714,6 +1714,7 @@ impl PmemConfig {
 
         Ok(PmemConfig {
             file,
+            fs_type: String::new(),
             size,
             iommu,
             discard_writes,

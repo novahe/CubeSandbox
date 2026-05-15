@@ -3,6 +3,7 @@
 //
 
 use clap::{Args, Parser, Subcommand};
+use containerd_shim_cube_rs::poc::cmd::ErofsPocArgs;
 use containerd_shim_cube_rs::snapshot::cmd::SnapshotArgs;
 
 #[derive(Parser, Debug)]
@@ -16,6 +17,9 @@ pub enum SubCommands {
     /// snapshot command
     #[clap(name = "snapshot", about = "snapshot command")]
     Snapshot(SnapshotArgs),
+    /// Start a standalone VM with two erofs pmem images for a quick PoC
+    #[clap(name = "erofs-poc", about = "launch a VM with two erofs pmem images")]
+    ErofsPoc(ErofsPocArgs),
     /// login command
     #[clap(name = "login", about = "Enter the guest by debug console")]
     Login(LoginArgs),

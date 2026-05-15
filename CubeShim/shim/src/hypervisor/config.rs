@@ -71,9 +71,6 @@ pub struct VmConfig {
 impl Default for VmConfig {
     fn default() -> Self {
         let params = vec![
-            "root=/dev/pmem0".to_string(),
-            "rootflags=dax,errors=remount-ro ro".to_string(),
-            "rootfstype=ext4".to_string(),
             "panic=1".to_string(),
             "no_timer_check".to_string(),
             "noreplace-smp".to_string(),
@@ -139,7 +136,26 @@ impl VmConfig {
         vc.memory.size = self.memory_size * MI_B;
         vc.memory.dirty_log = self.dirty_log;
 
-        let cmds = self.cmdlines.join(" ").to_string();
+        let mut final_cmds = self.cmdlines.clone();
+        if let Some(pmems) = &self.pmems {
+            if let Some(root_pmem) = pmems.get(0) {
+                final_cmds.push("root=/dev/pmem0".to_string());
+                if root_pmem.fs_type == "erofs"
+                    || root_pmem.file.to_string_lossy().contains("erofs")
+                    || (root_pmem.id.is_some()
+                        && root_pmem.id.as_ref().unwrap() == "root"
+                        && self.is_erofs_root())
+                {
+                    final_cmds.push("rootfstype=erofs".to_string());
+                    final_cmds.push("ro".to_string());
+                } else {
+                    final_cmds.push("rootfstype=ext4".to_string());
+                    final_cmds.push("rootflags=dax,errors=remount-ro ro".to_string());
+                }
+            }
+        }
+
+        let cmds = final_cmds.join(" ").to_string();
         let payload = PayloadConfig {
             cmdline: Some(cmds),
             kernel: Some(self.kernel.clone().into()),
@@ -173,7 +189,6 @@ impl VmConfig {
     }
 
     pub fn check_cmdline_conflicts(&self, extra_params: &[String]) -> Vec<String> {
-
         let mut existing_keys = HashSet::new();
         let mut existing_params = HashSet::new();
 
@@ -326,6 +341,22 @@ impl VmConfig {
     pub fn add_vsock(&mut self, id: String) -> &mut Self {
         self.vsock = Some(Utils::gen_vsock_config(&id));
         self
+    }
+
+    fn is_erofs_root(&self) -> bool {
+        if let Some(pmems) = &self.pmems {
+            if let Some(root) = pmems.get(0) {
+                if root.fs_type == "erofs" {
+                    return true;
+                }
+                // If it's explicitly set via id or file name
+                if root.file.to_string_lossy().contains("erofs") {
+                    return true;
+                }
+            }
+        }
+        // Fallback to host metadata
+        Utils::get_image_fs_type().unwrap_or("ext4".to_string()) == "erofs"
     }
 }
 
