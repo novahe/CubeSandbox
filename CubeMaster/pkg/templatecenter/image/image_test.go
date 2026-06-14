@@ -252,8 +252,8 @@ func TestExportImageRootfsUsesDockerlessSkopeoUmociWhenAvailable(t *testing.T) {
 	})
 
 	source := &PreparedSource{
-		LocalRef:      "cube-sandbox-cn.tencentcloudcr.com/cube-sandbox/sandbox-code:v1.2.3",
-		UseDockerless: true,
+		LocalRef:   "cube-sandbox-cn.tencentcloudcr.com/cube-sandbox/sandbox-code:v1.2.3",
+		ExportMode: ExportModeDockerless,
 	}
 	if err := exportImageRootfs(context.Background(), source, rootfsDir); err != nil {
 		t.Fatalf("exportImageRootfs failed: %v", err)
@@ -305,9 +305,9 @@ func TestExportImageRootfsUsesDockerPathWhenSourceNotDockerless(t *testing.T) {
 		return nil
 	})
 
-	// useDockerless is false, so the export must honor the docker path chosen at
+	// ExportMode: ExportModeDocker, so the export must honor the docker path chosen at
 	// prepare time even if skopeo/umoci happen to be installed.
-	if err := exportImageRootfs(context.Background(), &PreparedSource{LocalRef: "example.com/app:latest"}, t.TempDir()); err != nil {
+	if err := exportImageRootfs(context.Background(), &PreparedSource{LocalRef: "example.com/app:latest", ExportMode: ExportModeDocker}, t.TempDir()); err != nil {
 		t.Fatalf("exportImageRootfs failed: %v", err)
 	}
 	if !dockerExportCalled {
@@ -343,7 +343,7 @@ func TestExportImageRootfsPassesAuthFileToSkopeoCopy(t *testing.T) {
 
 	source := &PreparedSource{
 		LocalRef:       "example.com/app:latest",
-		UseDockerless:  true,
+		ExportMode:     ExportModeDockerless,
 		SkopeoAuthFile: "/tmp/auth-xyz/auth.json",
 	}
 	if err := exportImageRootfs(context.Background(), source, rootfsDir); err != nil {
@@ -532,7 +532,7 @@ func TestEstimateImageSizeFromInspectDockerlessUsesSkopeoSize(t *testing.T) {
 
 	source := &PreparedSource{
 		LocalRef:            "example.com/app:latest",
-		UseDockerless:       true,
+		ExportMode:          ExportModeDockerless,
 		CompressedSizeBytes: 1000,
 	}
 	got, err := estimateImageSizeFromInspect(context.Background(), source)
@@ -546,8 +546,8 @@ func TestEstimateImageSizeFromInspectDockerlessUsesSkopeoSize(t *testing.T) {
 
 func TestEstimateImageSizeFromInspectDockerlessMissingSize(t *testing.T) {
 	source := &PreparedSource{
-		LocalRef:      "example.com/app:latest",
-		UseDockerless: true,
+		LocalRef:   "example.com/app:latest",
+		ExportMode: ExportModeDockerless,
 	}
 	if _, err := estimateImageSizeFromInspect(context.Background(), source); err == nil {
 		t.Fatal("expected error when skopeo reports no layer sizes")
@@ -863,7 +863,7 @@ func TestBuildExt4StreamingSuccessSkipsPhase1(t *testing.T) {
 		return nil
 	})
 
-	result, err := BuildExt4(context.Background(), &PreparedSource{LocalRef: "docker.io/library/nginx:latest"}, BuildOptions{ArtifactID: "artifact-stream"})
+	result, err := BuildExt4(context.Background(), &PreparedSource{LocalRef: "docker.io/library/nginx:latest", ExportMode: ExportModeNative}, BuildOptions{ArtifactID: "artifact-stream"})
 	if err != nil {
 		t.Fatalf("BuildExt4 failed: %v", err)
 	}
@@ -995,7 +995,7 @@ func TestPrepareLocalSourceUsesDockerlessWhenAvailable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("PrepareLocalSource failed: %v", err)
 	}
-	if !got.UseDockerless {
+	if got.ExportMode != ExportModeDockerless {
 		t.Fatalf("expected dockerless source, got %#v", got)
 	}
 	if got.CompressedSizeBytes != 10 {
