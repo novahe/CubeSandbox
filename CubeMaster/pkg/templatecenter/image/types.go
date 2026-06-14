@@ -4,7 +4,11 @@
 
 package image
 
-import "context"
+import (
+	"context"
+
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+)
 
 type SourceSpec struct {
 	ImageRef         string
@@ -66,12 +70,38 @@ type PreparedSource struct {
 	Config         DockerImageConfig
 	ConfigJSON     string
 	MasterNodeIP   string
-	UseDockerless  bool
 	SkopeoAuthFile string
 	// compressedSizeBytes is the sum of the compressed layer blob sizes reported
 	// by `skopeo inspect` (LayersData[].Size). It is only populated on the
 	// dockerless path and lets the disk-space pre-check estimate the image size
 	// without invoking the docker daemon. Zero means "unknown".
 	CompressedSizeBytes int64
-	Cleanup             func(context.Context)
+	// ExportMode is determined during the Prepare phase and controls which path is used during the Export phase.
+	// An empty value is equivalent to ExportModeDocker (for backward compatibility).
+	ExportMode ExportMode
+
+	// RegistryAuth preserves the original Registry credentials for use by the native path.
+	RegistryAuth *RegistryAuthConfig
+
+	// nativeImage caches the prepared go-containerregistry image so export can
+	// reuse the same remote resolution instead of resolving the reference twice.
+	nativeImage v1.Image
+
+	Cleanup func(context.Context)
 }
+
+// RegistryAuthConfig holds the authentication credentials used for pulling the image
+// natively from the registry without relying on external CLI tools.
+type RegistryAuthConfig struct {
+	Username string
+	Password string
+}
+
+// ExportMode defines the backend used for exporting the image rootfs.
+type ExportMode string
+
+const (
+	ExportModeDocker     ExportMode = "" // Default backward-compatible fallback
+	ExportModeDockerless ExportMode = "dockerless"
+	ExportModeNative     ExportMode = "native"
+)

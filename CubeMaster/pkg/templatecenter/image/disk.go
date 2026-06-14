@@ -92,18 +92,24 @@ func createExt4ImageStreaming(ctx context.Context, source *PreparedSource, workD
 		return fmt.Errorf("mount loop device %s: %w", loopDevice, err)
 	}
 
-	// 4. Create container and stream export directly into the mounted ext4.
-	containerIDBytes, err := dockerOutput(ctx, "", "create", "--", source.LocalRef)
-	if err != nil {
-		return fmt.Errorf("docker create for streaming: %w", err)
-	}
-	containerID := strings.TrimSpace(string(containerIDBytes))
-	defer func() {
-		_ = dockerRun(cleanupCtx, "", "rm", "-f", containerID)
-	}()
+	// 4. Stream export directly into the mounted ext4.
+	if source.ExportMode == ExportModeNative {
+		if err := StreamRegistryToDir(ctx, source, mountPoint); err != nil {
+			return fmt.Errorf("native streaming to mount point: %w", err)
+		}
+	} else {
+		containerIDBytes, err := dockerOutput(ctx, "", "create", "--", source.LocalRef)
+		if err != nil {
+			return fmt.Errorf("docker create for streaming: %w", err)
+		}
+		containerID := strings.TrimSpace(string(containerIDBytes))
+		defer func() {
+			_ = dockerRun(cleanupCtx, "", "rm", "-f", containerID)
+		}()
 
-	if err := pipeExportToDir(ctx, containerID, mountPoint); err != nil {
-		return fmt.Errorf("pipe export to mount point: %w", err)
+		if err := pipeExportToDir(ctx, containerID, mountPoint); err != nil {
+			return fmt.Errorf("pipe export to mount point: %w", err)
+		}
 	}
 
 	// 5. Unmount (via cleanup).
@@ -187,7 +193,7 @@ func skopeoLayersTotalSize(info skopeoInspectImage) int64 {
 // time via `skopeo inspect`. The docker path keeps using the per-image
 // cumulative Size field from `docker image inspect`.
 func estimateImageSizeFromInspect(ctx context.Context, source *PreparedSource) (int64, error) {
-	if source != nil && source.UseDockerless {
+	if source != nil && (source.ExportMode == ExportModeDockerless || source.ExportMode == ExportModeNative) {
 		return estimateImageSizeFromSkopeo(source)
 	}
 	return estimateImageSizeFromDocker(ctx, source)

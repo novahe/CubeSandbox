@@ -28,3 +28,24 @@ Autonomously-by: AGENT_NAME:MODEL_VERSION
 Where:
 - `AGENT_NAME` is the name of the AI tool or framework
 - `MODEL_VERSION` is the specific model version used
+
+## Go Testing Policy
+
+When running Go tests in projects that use `agiledragon/gomonkey` for mocking, you MUST disable compiler inlining to prevent panic or mock failures.
+
+**MUST FOLLOW THIS**: Always include the `-gcflags="all=-l"` flag when running `go test`:
+
+```bash
+go test -gcflags="all=-l" -v ./...
+```
+
+## Cross-Platform Linux Testing Policy
+
+When running Go tests on macOS (Darwin) that depend on Linux-specific syscalls (e.g., `unix.F_SETPIPE_SZ`, `unix.CAP_SYS_ADMIN`), native `go test` will fail to compile. 
+
+**MUST FOLLOW THIS**: To run these tests or debug them, assume a persistent Linux Docker container named `golang-linux-test` is already running with the workspace mounted. Directly execute tests inside it:
+
+Execute tests inside the container (remember to append `-gcflags="all=-l"` if `gomonkey` is used):
+```bash
+docker exec golang-linux-test bash -c "cd <your_project_path> && go test -gcflags='all=-l' -v ."
+```

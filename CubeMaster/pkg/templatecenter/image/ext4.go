@@ -55,18 +55,27 @@ func createExt4Image(ctx context.Context, rootfsDir, ext4Path string) error {
 	return nil
 }
 
+// EnsureArtifactBuildPreflight asserts that the host has all necessary tools
+// installed to build images before starting a long-running workflow.
 func EnsureArtifactBuildPreflight(ctx context.Context) error {
 	requiredCommands := []string{"mkfs.ext4", "truncate", "cp"}
-	if hasDockerlessRootfsExportTools() {
-		requiredCommands = append(requiredCommands, "skopeo", "umoci")
-	} else {
-		requiredCommands = append(requiredCommands, "docker", "tar")
-	}
-	for _, cmd := range requiredCommands {
-		if _, err := executableLookPath(cmd); err != nil {
-			return fmt.Errorf("required command %q is not available on cubemaster node", cmd)
+	if !nativeRootfsExportEnabled() {
+		if hasDockerlessRootfsExportTools() {
+			requiredCommands = append(requiredCommands, "skopeo", "umoci")
+		} else {
+			requiredCommands = append(requiredCommands, "docker", "tar")
 		}
 	}
+
+	for _, cmd := range requiredCommands {
+		if _, err := executableLookPath(cmd); err != nil {
+			return fmt.Errorf("required command %q is not available: %w", cmd, err)
+		}
+	}
+	return checkMkfsExt4DSupport(ctx)
+}
+
+func checkMkfsExt4DSupport(ctx context.Context) error {
 	output, err := exec.CommandContext(ctx, "mkfs.ext4", "-h").CombinedOutput()
 	helpText := string(output)
 	if err != nil && helpText == "" {
@@ -118,7 +127,8 @@ func BuildExt4(ctx context.Context, source *PreparedSource, opts BuildOptions) (
 	// Skip when a PostRootfsExport hook is requested — the streaming path
 	// writes directly into the ext4 image and offers no rootfs directory to
 	// mutate before mkfs.ext4.
-	if opts.PostRootfsExport == nil && loopMountExt4Enabled() && canUseLoopMount() && !source.UseDockerless {
+	// Streaming Phase 2 is currently only implemented for docker and native modes.
+	if opts.PostRootfsExport == nil && loopMountExt4Enabled() && canUseLoopMount() && (source.ExportMode == ExportModeDocker || source.ExportMode == ExportModeNative) {
 		estimatedPhase2, err := estimateImageSizeFromInspect(ctx, source)
 		if err != nil {
 			log.G(ctx).Warnf("cannot estimate image size for Phase 2, falling back to Phase 1: %v", err)
