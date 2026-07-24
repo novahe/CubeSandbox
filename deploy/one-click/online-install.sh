@@ -243,7 +243,28 @@ EOF
     fi
   fi
 
-  # 9. Check deployment role early and check Docker/DNS installability (for control role)
+  # 9. /sys/fs/bpf filesystem check (mirrors check_bpf_fs_preflight in install.sh)
+  local bpf_dir="/sys/fs/bpf"
+
+  if ! grep -qw bpf /proc/filesystems; then
+    echo "[online-install] ERROR: Your kernel does not support the 'bpf' filesystem (eBPF is missing or not enabled)." >&2
+    echo "[online-install] network-agent requires eBPF to function properly." >&2
+    echo "[online-install] Please upgrade your kernel or enable CONFIG_BPF_SYSCALL." >&2
+    exit 3
+  fi
+
+  local bpf_fs_type=""
+  if [[ -d "${bpf_dir}" ]]; then
+    bpf_fs_type="$(df -T "${bpf_dir}" 2>/dev/null | awk 'NR==2 {print $2}' || true)"
+  fi
+  if [[ "${bpf_fs_type}" != "bpf" ]]; then
+    echo "[online-install] ERROR: /sys/fs/bpf is not mounted as a bpf filesystem (type: ${bpf_fs_type:-unknown})." >&2
+    echo "[online-install] network-agent requires bpffs for its pinned eBPF maps." >&2
+    echo "[online-install] Troubleshooting: https://github.com/TencentCloud/CubeSandbox/blob/master/docs/guide/troubleshooting/deployment.md#bpffs-is-not-mounted" >&2
+    exit 3
+  fi
+
+  # 10. Check deployment role early and check Docker/DNS installability (for control role)
   local deploy_role="${ONE_CLICK_DEPLOY_ROLE:-control}"
   case "${deploy_role}" in
     control|compute) ;;
